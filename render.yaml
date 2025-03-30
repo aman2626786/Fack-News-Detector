@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: fake-news-detector
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      mkdir -p models templates
+      chmod -R 755 models templates
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 4 --timeout 120 app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: FLASK_ENV
+        value: production
+      - key: PYTHONPATH
+        value: /opt/render/project/src
+      - key: PYTHONUNBUFFERED
+        value: 1
+    healthCheckPath: /
+    autoDeploy: true
+    disk:
+      name: data
+      mountPath: /opt/render/project/src
+      sizeGB: 1
+    buildFilter:
+      paths:
+        - app.py
+        - requirements.txt
+        - Procfile
+        - models/**/*
+        - templates/**/*
+        - .gitignore
+        - render.yaml
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache 
