@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake News Detector</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            max-width: 800px;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            flex: 1;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background: white;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .card-header h2 {
+            margin: 0;
+            font-weight: 600;
+        }
+        .card-header p {
+            margin: 0.5rem 0 0;
+            opacity: 0.9;
+        }
+        .form-control {
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            border: 2px solid #e9ecef;
+            transition: border-color 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        .btn-primary {
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            border: none;
+            transition: transform 0.2s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+        #result {
+            margin-top: 2rem;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .result-card {
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            color: #007bff;
+        }
+        .result-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .confidence-bar {
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #ffc107);
+            transition: width 0.5s ease;
+        }
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+        .footer p {
+            margin: 0;
+            color: #6c757d;
+        }
+        .certainty-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+        .certainty-high {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .certainty-moderate {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .certainty-low {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-newspaper me-2"></i>Fake News Detector</h2>
+                <p>Enter a news article to check if it's real or fake</p>
+            </div>
+            <div class="card-body">
+                <form id="newsForm">
+                    <div class="mb-3">
+                        <textarea class="form-control" id="newsText" rows="6" placeholder="Paste your news article here..."></textarea>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>Analyze
+                        </button>
+                    </div>
+                </form>
+                <div class="loading">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Analyzing the news article...</p>
+                </div>
+                <div id="result">
+                    <div class="result-card">
+                        <div class="text-center">
+                            <div class="result-icon">
+                                <i id="resultIcon" class="fas"></i>
+                            </div>
+                            <h4 class="mb-3">Analysis Result</h4>
+                            <h5>Prediction: <span id="prediction" class="fw-bold"></span></h5>
+                            <div class="confidence-bar">
+                                <div id="confidenceFill" class="confidence-fill" style="width: 0%"></div>
+                            </div>
+                            <p>Confidence: <span id="confidence" class="fw-bold"></span></p>
+                            <div id="certaintyBadge" class="certainty-badge"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2024 Fake News Detector - Powered by Machine Learning</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('newsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = document.getElementById('newsText').value.trim();
+            
+            if (!text) {
+                alert('Please enter a news article');
+                return;
+            }
+
+            // Show loading spinner
+            document.querySelector('.loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Update prediction
+                    const predictionElement = document.getElementById('prediction');
+                    predictionElement.textContent = data.prediction;
+                    predictionElement.style.color = data.prediction === 'Real News' ? '#28a745' : '#dc3545';
+
+                    // Update confidence
+                    const confidenceElement = document.getElementById('confidence');
+                    confidenceElement.textContent = `${data.confidence.toFixed(2)}%`;
+                    
+                    // Update confidence bar
+                    const confidenceFill = document.getElementById('confidenceFill');
+                    confidenceFill.style.width = `${data.confidence}%`;
+
+                    // Update certainty badge
+                    const certaintyBadge = document.getElementById('certaintyBadge');
+                    certaintyBadge.textContent = data.certainty.charAt(0).toUpperCase() + data.certainty.slice(1) + ' Certainty';
+                    certaintyBadge.className = `certainty-badge certainty-${data.certainty}`;
+
+                    // Update result icon
+                    const resultIcon = document.getElementById('resultIcon');
+                    resultIcon.className = `fas ${data.prediction === 'Real News' ? 'fa-check-circle text-success' : 'fa-times-circle text-danger'}`;
+
+                    // Show result
+                    document.getElementById('result').style.display = 'block';
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error analyzing the news article. Please try again.');
+            } finally {
+                document.querySelector('.loading').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html> 
